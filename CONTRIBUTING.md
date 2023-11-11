@@ -29,9 +29,6 @@ cd transcription-web-app
 
 ### Step 4: Make Changes
 
-```markdown
-### 4. Make Changes
-
 - Make your desired changes to the codebase.
 
 ### 5. Commit Changes
@@ -44,9 +41,6 @@ git commit -m "Add new feature: describe the feature"
 
 ### Step 6: Push Changes
 
-```markdown
-### 6. Push Changes
-
 - Push your changes to your forked repository.
 
 ```bash
@@ -54,9 +48,6 @@ git push origin feature/new-feature
 ```
 
 ### Step 7: Submit a Pull Request
-
-```markdown
-### 7. Submit a Pull Request
 
 - Create a pull request from your branch to the main repository.
 - Provide a clear title and description for your pull request, explaining the changes made.
