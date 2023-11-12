@@ -1,19 +1,71 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv() # This loads the environment variables from the .env file
 
 app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+
+db = SQLAlchemy()
+db.init_app(app)
+
+migrate = Migrate(app, db)
+
 CORS(app) # This will enable CORS for all routes
 
-@app.route('/')
+class User(db.Model):
+    """
+    Represents a user in the application.
+
+    Attributes:
+        id (int): The unique identifier for the user.
+        username (str): The username of the user.
+        email (str): The email address of the user.
+        password (str): The password of the user.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=False, unique=True)
+    email = db.Column(db.String(120), nullable=False, unique=True)
+    password = db.Column(db.String(120), nullable=False)
+
+@app.route('/', methods=['GET', 'POST'])
 def hello_world():
+    if request.method == 'POST':
+        data=request.json
+        return 'Hello, {}!'.format(data['name'])
     return 'Hello, World!'
 
-@app.route('/api/upload', methods=['POST'])
+@app.route('/api/files/upload', methods=['POST'])
 def upload():
     data = request.json
     return jsonify({'message':'File uploaded successfully', 'data':data})
 
-@app.route('/api/transcribe', methods=['POST'])
+@app.route('/api/transcriptions/transcribe', methods=['POST'])
 def transcribe():
     data = request.json
     return jsonify({'message':'Transcription successful', 'data':data})
+
+@app.route('/api/users/register', methods=['POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, email=email, password=hashed_password)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('User successfully registered', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html')
