@@ -67,21 +67,38 @@ def register():
         email = request.form['email']
         password = request.form['password']
 
+        user = User.query.filter_by(username=username).first()
+        email = User.query.filter_by(email=email).first()
+        # print("{} / {}".format(user.id, user.email))
+        if user:
+            # If the username already exists, return an error message
+            return jsonify({"error":"Username already in use.", "message":"", "data":""}), 409
+        
+        if email:
+            # If the email already exists, return an error message
+            return jsonify({"error":"Email already used for a different account, Please use a different one.", "message":"", "data":""}), 409
+
         # Hash the password using pbkdf2:sha256 method
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
         # Create a new User object with the hashed password
         new_user = User(username=username, email=email, password=hashed_password)
-
         # Add the new user to the database and commit the changes
+
+        # try:
         db.session.add(new_user)
         db.session.commit()
+        
+        # except Exception as e:
+        #     # If there is an error, rollback the changes and return an error message
+        #     db.session.rollback()
+        #     return jsonify({"error":"Error occurred during registration. Please contact an administrator.", "message":"", "data":""})
 
         # Return a success message and the ID of the newly created user
-        return jsonify({"error":"",'message':'User successfully registered', 'userID':new_user.id})
+        return jsonify({"error":"",'message':'User successfully registered', 'userID':new_user.id}), 201
     
     # If the request method is not POST, return an error message
-    return jsonify({"error":"GET method not allowed", "message":"", "data":""})
+    return jsonify({"error":"GET method not allowed", "message":"", "data":""}), 405
 
 @app.route('/api/users/login', methods=['POST'])
 def login():
@@ -108,7 +125,7 @@ def login():
         else:
             # If the user doesn't exist or the password is incorrect, return an error message
             flash('Invalid username or password', 'error')
-            return jsonify({"error":"Invalid username or password", "message":"", "data":""})
+            return jsonify({"error":"Invalid username or password", "message":"", "data":""}), 401
 
     # If the request method is not POST, return an error message
-    return jsonify({"error":"GET method not allowed", "message":"", "data":""})
+    return jsonify({"error":"GET method not allowed", "message":"", "data":""}), 405
