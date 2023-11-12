@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -67,5 +67,24 @@ def register():
         db.session.commit()
 
         flash('User successfully registered', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html')
+        return jsonify({"error":"",'message':'User successfully registered', 'userID':new_user.id})
+    return jsonify({"error":"GET method not allowed", "message":"", "data":""})
+
+@app.route('/api/users/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+
+        if user and check_password_hash(user.password, password):
+            session['user_id'] = user.id
+            # flash('Login successful', 'success')
+            # return redirect(url_for('dashboard'))
+            return jsonify({"error":"",'message':'Login successful', 'userID':user.id})
+        else:
+            flash('Invalid username or password', 'error')
+            return jsonify({"error":"Invalid username or password", "message":"", "data":""})
+
+    return jsonify({"error":"GET method not allowed", "message":"", "data":""})
