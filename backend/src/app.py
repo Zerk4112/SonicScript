@@ -55,36 +55,60 @@ def transcribe():
 
 @app.route('/api/users/register', methods=['POST'])
 def register():
+    """
+    Registers a new user by creating a new User object and adding it to the database.
+
+    Returns:
+        A JSON response containing an error message (if any), a success message, and the ID of the newly created user.
+    """
     if request.method == 'POST':
+        # Get user input from the request form
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
 
+        # Hash the password using pbkdf2:sha256 method
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+
+        # Create a new User object with the hashed password
         new_user = User(username=username, email=email, password=hashed_password)
 
+        # Add the new user to the database and commit the changes
         db.session.add(new_user)
         db.session.commit()
 
-        flash('User successfully registered', 'success')
+        # Return a success message and the ID of the newly created user
         return jsonify({"error":"",'message':'User successfully registered', 'userID':new_user.id})
+    
+    # If the request method is not POST, return an error message
     return jsonify({"error":"GET method not allowed", "message":"", "data":""})
 
 @app.route('/api/users/login', methods=['POST'])
 def login():
+    """
+    This function handles user login requests.
+
+    Returns:
+    JSON response containing error message, login message and user ID.
+    """
     if request.method == 'POST':
+        # Get username and password from the request form
         username = request.form['username']
         password = request.form['password']
 
+        # Query the User table for the given username
         user = User.query.filter_by(username=username).first()
 
+        # Check if the user exists and the password is correct
         if user and check_password_hash(user.password, password):
+            # Set the user ID in the session
             session['user_id'] = user.id
-            # flash('Login successful', 'success')
-            # return redirect(url_for('dashboard'))
+            # Return a JSON response with success message and user ID
             return jsonify({"error":"",'message':'Login successful', 'userID':user.id})
         else:
+            # If the user doesn't exist or the password is incorrect, return an error message
             flash('Invalid username or password', 'error')
             return jsonify({"error":"Invalid username or password", "message":"", "data":""})
 
+    # If the request method is not POST, return an error message
     return jsonify({"error":"GET method not allowed", "message":"", "data":""})
